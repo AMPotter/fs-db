@@ -1,0 +1,31 @@
+{
+  "name": "fs-db",
+  "version": "1.0.0",
+  "description": "Just a lil' FS \"database\" to code along with the students.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha",
+    "start": "npm run test -- -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AMPotter/fs-db.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AMPotter/fs-db/issues"
+  },
+  "homepage": "https://github.com/AMPotter/fs-db#readme",
+  "devDependencies": {
+    "eslint": "^5.0.1",
+    "mocha": "^5.2.0"
+  },
+  "dependencies": {
+    "shortid": "^2.2.8"
+  }
+}
