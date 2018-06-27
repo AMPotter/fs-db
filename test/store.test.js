@@ -1,7 +1,6 @@
 const assert = require('assert');
 const join = require('path').join;
-const rimraf = require('rimraf');
-const mkdirp = require('mkdirp');
+const { rimraf, mkdirp } = require('../lib/promisified');
 
 const Store = require('../lib/store');
 
@@ -10,91 +9,80 @@ describe('store', () => {
     const TEST_DIR = join(__dirname, 'data');
 
     let store = null;
-    beforeEach(done => {
-        rimraf(TEST_DIR, err => {
-            if(err) return done(err);
-            mkdirp(TEST_DIR, err => {
-                if(err) return done(err);
-                store = new Store(TEST_DIR);
-                done();
-            });
-        });
+    beforeEach(() => {
+        return rimraf(TEST_DIR)
+            .then(() => mkdirp(TEST_DIR))
+            .then(() => store = new Store(TEST_DIR));
     });
 
-    it('saves and gets an item', done => {
-        store.save({ name: 'garfield' }, (err, saved) => {
-            if(err) return done(err);
+    it('saves and gets an item', () => {
+        let saved = null;
+        store.save({ name: 'garfield' })
+            .then(_saved => {
+                saved = _saved;
+                assert.ok(saved._id);
+                assert.equal(saved.name, 'garfield');
 
-            assert.ok(saved._id);
-            assert.equal(saved.name, 'garfield');
-
-            store.get(saved._id, (err, got) => {
-                if(err) return done(err);
+                return store.get(saved._id);
+            })
+            .then(got => {
                 assert.deepEqual(got, saved);
-                done();
             });
-        });
     });
 
-    it('returns null for a non-existent id', done => {
-        store.get('bad id', (err, item) => {
-            if(err) return done(err);
-            assert.strictEqual(item, null);
-            done();
-        });
+    it('returns null for a non-existent id', () => {
+        return store.get('bad id')
+            .then(item => {
+                assert.strictEqual(item, null);
+            });
     });
 
-    it('removes an item by id', done => {
-        store.save({ name: 'garfield' }, (err, saved) => {
-            if(err) return done(err);
-            store.remove(saved._id, (err, status) => {
-                if(err) return done(err);
+    it('removes an item by id', () => {
+        let saved = null;
+        return store.save({ name: 'garfield' })
+            .then(_saved => {
+                saved = _saved;
+                return store.remove(saved._id);
+            })
+            .then(status => {
                 assert.deepEqual(status, { removed: true });
-                store.get(saved._id, (err, got) => {
-                    if(err) return done(err);
-                    assert.strictEqual(got, null);
-                    done();
-                });
+                return store.get(saved._id);
+            })
+            .then(got => {
+                assert.strictEqual(got, null);
             });
-        });
     });
 
-    it('returns false status when removing non-existent id', done => {
-        store.remove('bad id', (err, status) => {
-            if(err) return done(err);
-            assert.deepEqual(status, { removed: false });
-            done();
-        });
+    it('returns false status when removing non-existent id', () => {
+        return store.remove('bad id')
+            .then(status => {
+                assert.deepEqual(status, { removed: false });
+            });
     });
 
-    it('returns empty array when no items', done => {
-        store.getAll((err, items) => {
-            if(err) return done(err);
-            assert.deepEqual(items, []);
-            done();
-        });
+    it('returns empty array when no items', () => {
+        return store.getAll()
+            .then(items => {
+                assert.deepEqual(items, []);
+            });
     });
 
-    it('return all saved items', done => {
+    it('return all saved items', () => {
         const toSave = [
             { name: 'garfield' },
             { name: 'lassie' },
             { name: 'tweety' }
         ];
-        const saved = [];
-        toSave.forEach(item => {
-            store.save(item, (err, savedItem) => {
-                if(err) return done(err);
-                saved.push(savedItem);
-                if(saved.length == toSave.length) {
-                    saved.sort((a, b) => a._id < b._id ? -1 : 1);
-                    store.getAll((err, all) => {
-                        if(err) return done(err);
-                        assert.deepEqual(all, saved);
-                        done();
-                    });
-                }
+
+        let saved = null;
+        return Promise.all(toSave.map(item => store.save(item)))
+            .then(_saved => {
+                saved = _saved;
+                saved.sort((a, b) => a._id < b._id ? -1 : 1);
+                return store.getAll();
+            })
+            .then(all => {
+                assert.deepEqual(all, saved);
             });
-        });
     });
 });
