@@ -26,6 +26,8 @@
     "mocha": "^5.2.0"
   },
   "dependencies": {
+    "mkdirp": "^0.5.1",
+    "rimraf": "^2.6.2",
     "shortid": "^2.2.8"
   }
 }
